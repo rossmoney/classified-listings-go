@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "vue-component-type-helpers": "^2.2.0"
+  }
+}

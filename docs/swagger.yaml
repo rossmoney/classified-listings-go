@@ -1,0 +1,271 @@
+basePath: /api
+definitions:
+  responses.Error:
+    properties:
+      field_name:
+        type: string
+      message:
+        type: string
+    type: object
+  responses.ErrorMessageResponse:
+    properties:
+      error:
+        description: |-
+          @ApiModelProperty( value = "error output",
+                     name = "error",
+                     dataType = "string",
+                     required = true,
+                     position = 2
+            )
+        type: string
+      message:
+        description: |-
+          @ApiModelProperty( value = "error message",
+                     name = "message",
+                     dataType = "string",
+                     required = true,
+                     position = 1
+            )
+        type: string
+      status:
+        description: |-
+          @ApiModelProperty( value = "http status",
+                     name = "status",
+                     dataType = "int",
+                     position = 3
+            )
+        type: integer
+    type: object
+  responses.SuccessResponse:
+    properties:
+      data:
+        description: |-
+          @ApiModelProperty( value = "data",
+                     name = "data",
+                     dataType = "array",
+                     required = true,
+                     position = 3
+            )
+      message:
+        description: |-
+          @ApiModelProperty( value = "message to display",
+                     name = "message",
+                     dataType = "string",
+                     position = 1
+            )
+        type: string
+      status:
+        description: |-
+          @ApiModelProperty( value = "http status",
+                     name = "status",
+                     dataType = "int",
+                     position = 2
+            )
+        type: integer
+    type: object
+  responses.ValidationErrorResponse:
+    properties:
+      errors:
+        description: |-
+          @ApiModelProperty( value = "array of form field validation errors",
+                     name = "errors",
+                     dataType = "array",
+                     required = true,
+                     position = 1
+            )
+        items:
+          $ref: '#/definitions/responses.Error'
+        type: array
+      status:
+        description: |-
+          @ApiModelProperty( value = "http status",
+                     name = "status",
+                     dataType = "int",
+                     position = 1
+            )
+        type: integer
+    type: object
+  routes.Listing:
+    properties:
+      active:
+        description: |-
+          Whether the listing is active
+          example: true
+        type: boolean
+      category:
+        description: |-
+          The category of the listing
+          required: true
+          example: Property
+        type: string
+      date_posted:
+        description: |-
+          The date the listing was posted
+          required: true
+          example: 2025-01-01T00:00:00Z
+        type: string
+      description:
+        description: |-
+          The description of the listing
+          required: true
+          example: This is my first listing
+        type: string
+      id:
+        description: |-
+          The ID of the listing
+
+          example: 1
+        type: integer
+      price:
+        description: |-
+          The price of the listing
+          required: true
+          example: 100.00
+        example: "0"
+        type: string
+      title:
+        description: |-
+          The title of the listing
+          required: true
+          example: Red House
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: ross.money@gmx.com
+    name: Ross Money
+  termsOfService: http://swagger.io/terms/
+  title: Classified Listings API
+  version: "1.0"
+paths:
+  /listings:
+    get:
+      consumes:
+      - application/json
+      description: GetListings responds with the list of all listings as JSON.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse'
+      summary: get listings
+    post:
+      consumes:
+      - application/json
+      description: CreateListing adds a listing from JSON received in the request
+        body.
+      parameters:
+      - description: Listing data to create
+        in: body
+        name: listing
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Listing'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ValidationErrorResponse'
+      summary: create listing
+  /listings/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: DeleteListing locates the listing whose ID value matches the id
+        parameter sent by the client, then deletes it.
+      parameters:
+      - description: Listing ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorMessageResponse'
+      summary: delete listing
+    get:
+      consumes:
+      - application/json
+      description: GetListing locates the listing whose ID value matches the id parameter
+        sent by the client, then returns that listing as a response.
+      parameters:
+      - description: Listing ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: search by title
+        in: query
+        name: title
+        type: string
+      - description: filter by category
+        in: query
+        name: category
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse'
+        "404":
+          description: listing not found
+          schema:
+            $ref: '#/definitions/responses.ErrorMessageResponse'
+      summary: get listing
+    put:
+      consumes:
+      - application/json
+      description: UpdateListing updates the listing whose ID value matches the id
+        parameter sent by the client.
+      parameters:
+      - description: Listing ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Listing data to update
+        in: body
+        name: listing
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Listing'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ValidationErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorMessageResponse'
+      summary: update listing
+      tags:
+      - listings
+schemes:
+- http
+swagger: "2.0"
