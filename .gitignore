@@ -26,3 +26,4 @@ go.work.sum
 bin
 vendor
 static
+node_modules

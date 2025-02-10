@@ -4789,6 +4789,11 @@ vue-bundle-renderer@^2.1.1:
   dependencies:
     ufo "^1.5.4"
 
+vue-component-type-helpers@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/vue-component-type-helpers/-/vue-component-type-helpers-2.2.0.tgz#de5fa802b6beae7125595ec0d3d5195a22691623"
+  integrity sha512-cYrAnv2me7bPDcg9kIcGwjJiSB6Qyi08+jLDo9yuvoFQjzHiPTzML7RnkJB1+3P6KMsX/KbCD4QE3Tv/knEllw==
+
 vue-currency-input@^3.2.1:
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/vue-currency-input/-/vue-currency-input-3.2.1.tgz#61a6fdf2b80e3f1b21017a1eec614893766cb30f"
