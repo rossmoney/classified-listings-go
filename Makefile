@@ -18,3 +18,12 @@ build-mac: generate-frontend
 
 build-linux: generate-frontend
 	env GOOS=linux GOARCH=amd64 go build -o bin/listings-linux
+
+install:
+	cd ui && yarn install
+
+open:
+	open http://localhost:8080
+
+open-swagger:
+	open http://localhost:8000
