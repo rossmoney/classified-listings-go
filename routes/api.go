@@ -204,11 +204,17 @@ func (l *Listing) GetListing(c *gin.Context) {
 		}
 	}
 
-	c.IndentedJSON(http.StatusNotFound, &responses.ErrorMessageResponse{
+	response := &responses.ErrorMessageResponse{
 		Message: "listing not found",
 		Status:  http.StatusNotFound,
-		Error:   err.Error(),
-	})
+		Error:   "",
+	}
+
+	if err != nil {
+		response.Error = err.Error()
+	}
+
+	c.IndentedJSON(http.StatusNotFound, response)
 }
 
 // @BasePath /listings/{id}
@@ -290,11 +296,17 @@ func (l *Listing) UpdateListing(c *gin.Context) {
 		}
 	}
 
-	c.IndentedJSON(http.StatusNotFound, &responses.ErrorMessageResponse{
+	response := &responses.ErrorMessageResponse{
 		Message: "listing not found",
-		Error:   err.Error(),
+		Error:   "",
 		Status:  http.StatusNotFound,
-	})
+	}
+
+	if err != nil {
+		response.Error = err.Error()
+	}
+
+	c.IndentedJSON(http.StatusNotFound, response)
 }
 
 // @BasePath /listings/{id}
@@ -328,9 +340,15 @@ func (l *Listing) DeleteListing(c *gin.Context) {
 		}
 	}
 
-	c.IndentedJSON(http.StatusNotFound, &responses.ErrorMessageResponse{
+	response := &responses.ErrorMessageResponse{
 		Message: "Listing not found",
-		Error:   err.Error(),
+		Error:   "",
 		Status:  http.StatusNotFound,
-	})
+	}
+
+	if err != nil {
+		response.Error = err.Error()
+	}
+
+	c.IndentedJSON(http.StatusNotFound, response)
 }

@@ -1,6 +1,4 @@
 <template>
-  <confirm ref="confirm"></confirm>
-  <message ref="message"></message>
   <div v-if="currentListing" class="edit-form py-3">
     <h2>Edit Listing</h2><br>
 
@@ -29,7 +27,7 @@
 
       <v-date-picker
         v-model="currentListing.date_posted"
-        :rules="[(v) => !!v || 'Date is required']"
+        :rules="[(v: any) => !!v || 'Date is required']"
         label="Date"
         required
       ></v-date-picker>
@@ -76,72 +74,70 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, useTemplateRef } from 'vue';
-import Confirm from '../components/confirm.vue'
-import Message from '../components/message.vue'
-import type { ComponentExposed } from 'vue-component-type-helpers'
+import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ListingDataService from '../services/ListingDataService';
+import type { Listing } from '~/types/Listing';
 
-const confirm = useTemplateRef<ComponentExposed<typeof Confirm>>('confirm');
-const message = useTemplateRef<ComponentExposed<typeof Message>>('message');
+const currentListing = useCurrentListingState();
+const confirmOpen = useDialogStore(state => state.openConfirm);
+const messageOpen = useDialogStore(state => state.openMessage);
 
 const route = useRoute();
 const router = useRouter();
 
-const currentListing = useState('currentListing', () => (
-  {
-    title: '',
-    description: '',
-    date_posted: new Date(),
-    price: '0.00',
-    category: '',
-  }
-));
+const partialUpdate = ref<Listing>(currentListing.value);
+const doPartialUpdate = ref(false);
 
-const partialUpdate = ref({});
-
-const getEditListing = (listing) => {
-  listing.date_posted = new Date(listing.date_posted);
+const getEditListing = (listing: Listing) => {
+  listing.date_posted = new Date(listing.date_posted.toString());
   return listing;
 };
 
-const loadListing = async (id) => {
-  const { data, status, error } = await ListingDataService.get(id);
-  //console.log(data?.value, status?.value, error?.value?.statusCode, error?.value?.data);
+const loadListing = async (id: number) => {
+  const { data, error } = await ListingDataService.get(id);
+  if (error?.value?.statusCode == 404) {
+    messageOpen('Oops', 'This listing does not exist.', [], { color: 'red' }, async () => { 
+      await navigateTo("/");
+    });
+  }
   currentListing.value = getEditListing(data?.value?.data);
 };
 
 const deleteListing = async () => {
-  if (await confirm.value?.open('Delete', 'Are you sure?', { color: 'red' })) {
+  let deleteListingMethod = async () => {
     const { error } = await ListingDataService.delete(currentListing.value.id)
     if (error?.value) {
-      await message.value?.open('Error', 'The listing was not deleted!' + (' - ' + (error?.value?.data?.message ?? '')), [], { color: 'red' })
+      messageOpen('Error', 'The listing was not deleted!' + (' - ' + (error?.value?.data?.message ?? '')), [], { color: 'red' });
       return;
     }
-    router.push({ name: "/" });
-    await message.value?.open('', 'The listing was deleted successfully!', [], { color: 'green' })
+    await navigateTo("/");
+    messageOpen('', 'The listing was deleted successfully!', [], { color: 'green' });
   }
+  confirmOpen('Delete', 'Are you sure?', [], { color: 'red' }, deleteListingMethod);
 };
 
-const updateActive = (status) => {
+const updateActive = (status: boolean) => {
+  partialUpdate.value = currentListing.value;
   currentListing.value.active = status;
-  partialUpdate.value = { active: currentListing.value.active };
+  partialUpdate.value.active = currentListing.value.active;
+  doPartialUpdate.value = true;
   updateListing();
 };
 
 const updateListing = async () => {
-  const { error } = await ListingDataService.update(currentListing.value.id, (Object.keys(partialUpdate.value).length > 0) ? partialUpdate.value : currentListing.value)
-  partialUpdate.value = {};
+  const { error } = await ListingDataService.update(currentListing.value.id, doPartialUpdate.value ? partialUpdate.value : currentListing.value)
+  doPartialUpdate.value = false;
   if (error?.value) {
-    let errorMsg = 'The listing was not updated successfully!' + (' - ' + (error?.value?.data?.message ?? ''));
-    await message.value?.open('Error', errorMsg, error?.value?.data?.errors, { color: 'red' })
+    messageOpen('Error', 'The listing was not updated successfully!' + (' - ' + (error?.value?.data?.message ?? '')), error?.value?.data?.errors, { color: 'red' });
     return;
   }
-  await message.value?.open('', 'The listing was updated successfully!', [], { color: 'green' })
+  messageOpen('', 'The listing was updated successfully!', [], { color: 'green' });
 };
 
-onMounted(async () => {
-  await loadListing(route.params.id);
-});
+const onMountedCallback = async () => {
+  await loadListing(+route.params.id);
+};
+
+onMounted(onMountedCallback);
 </script>

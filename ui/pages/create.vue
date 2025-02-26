@@ -1,7 +1,5 @@
 
   <template>
-    <confirm ref="confirm"></confirm>
-    <message ref="message"></message>
     <div class="edit-form py-3">
       <h2>New Listing</h2><br>
   
@@ -30,7 +28,7 @@
 
         <v-date-picker
           v-model="currentListing.date_posted"
-          :rules="[(v) => !!v || 'Date is required']"
+          :rules="[(v: any) => !!v || 'Date is required']"
           label="Date"
           required
         ></v-date-picker>
@@ -69,42 +67,46 @@
   </template>
   
   <script setup lang="ts">
-  import { ref, onMounted, useTemplateRef } from 'vue';
-  import Confirm from '../components/confirm.vue'
-  import Message from '../components/message.vue'
-  import type { ComponentExposed } from 'vue-component-type-helpers'
+  import { onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import ListingDataService from '../services/ListingDataService';
-
-  const confirm = useTemplateRef<ComponentExposed<typeof Confirm>>('confirm');
-  const message = useTemplateRef<ComponentExposed<typeof Message>>('message');
+  import { useCurrentListingState } from '~/composables/states';
+  import type { Listing } from '~/types/Listing';
 
   const newListing = {
+    id: 0,
     title: '',
     description: '',
     date_posted: new Date(),
+    date_posted_human: '',
     price: '0.00',
     category: '',
-  };
+    active: false,
+  } as Listing;
 
-  const currentListing = useState('currentListing', () => null);
+  const currentListing = useCurrentListingState();
+  const messageOpen = useDialogStore(state => state.openMessage);
+
   const router = useRouter();
 
-  const updateActive = (status) => {
+  const updateActive = (status: boolean) => {
     currentListing.value.active = status;
   };
 
   const createListing = async () => {
     const { data, error } = await ListingDataService.create(currentListing.value);
     if (error?.value) {
-      let errorMsg = 'The listing was not created successfully!' + (' - ' + (error?.value?.data?.message ?? ''));
-      await message.value?.open('Error', errorMsg, error?.value?.data?.errors, { color: 'red' })
+      messageOpen('Error', 
+        'The listing was not created successfully!' + (' - ' + (error?.value?.data?.message ?? '')), 
+        error?.value?.data?.errors, 
+        { color: 'red'},
+      );
       return;
     }
-    if (data?.value?.id) {
-      router.push({ name: "id", params: { id: data?.value.id } })
+    if (data?.value?.data.id) {
+      router.push({ name: "id", params: { id: data?.value.data.id } })
     }
-    await message.value?.open('', 'The listing was created successfully!', [], { color: 'green' })
+    messageOpen('', 'The listing was created successfully!', [], { color: 'green' })
   };
 
   onMounted(async () => {

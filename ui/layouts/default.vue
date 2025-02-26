@@ -10,6 +10,7 @@
     </v-app-bar>
     <v-main>
       <v-container>
+        <ModalDialog />
         <NuxtPage/>
       </v-container>
     </v-main>
@@ -23,12 +24,9 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRoute } from 'vue-router';
 
 const clipped = ref(false);
 const fixed = ref(false);
-
-const route = useRoute();
 
 const title = ref('Classified Listings - Mini Application');
 </script>

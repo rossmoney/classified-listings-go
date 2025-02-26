@@ -1,6 +1,4 @@
 <template>
-  <confirm ref="confirm"></confirm>
-  <message ref="message"></message>
   <v-row align="center" class="list px-3 mx-auto">
 
     <v-col cols="12" md="8">
@@ -61,31 +59,32 @@
 </template>
   
 <script setup lang="ts">
-  import { ref, onMounted, useTemplateRef } from 'vue';
-  import Confirm from '../components/confirm.vue'
-  import Message from '../components/message.vue'
-  import type { ComponentExposed } from 'vue-component-type-helpers'
+  import { ref, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import ListingDataService from '../services/ListingDataService';
+  import { useAllListingsState } from '~/composables/states';
+  import type { Listing } from '~/types/Listing';
 
-  const confirm = useTemplateRef<ComponentExposed<typeof Confirm>>('confirm');
-  const message = useTemplateRef<ComponentExposed<typeof Message>>('message');
+  const listings = useAllListingsState();
+  const currentListing = useCurrentListingState();
+  const messageOpen = useDialogStore(state => state.openMessage);
+  const confirmOpen = useDialogStore(state => state.openConfirm);
+
   const title = ref('');
   const category = ref('');
-  let listings = useState('listings', () => null);
   const headers = ref([
     { text: 'Title', align: 'left', value: 'title' },
     { text: 'Description', value: 'description' },
     { text: 'Price', value: 'price' },
     { text: 'Category', value: 'category' },
-    { text: 'Date Posted', value: 'date_posted' },
+    { text: 'Date Posted', value: 'date_posted_human' },
     { text: 'Status', value: 'status' },
     { text: '', value: 'actions', sortable: false },
   ]);
 
   const router = useRouter();
 
-  const getDisplayListing = (listing) => {
+  const getDisplayListing = (listing: Listing) => {
     const formatter = new Intl.DateTimeFormat('en-GB', {
       year: 'numeric',
       month: '2-digit',
@@ -97,9 +96,11 @@
       title: listing.title.length > 30 ? listing.title.substr(0, 30) + "..." : listing.title,
       description: listing.description.length > 30 ? listing.description.substr(0, 30) + "..." : listing.description,
       status: listing.active ? "Active" : "Not active",
-      date_posted: formatter.format(Date.parse(listing.date_posted)),
+      date_posted: new Date(listing.date_posted.toString()),
+      date_posted_human: formatter.format(Date.parse(listing.date_posted.toString())),
       price: '£' + listing.price,
-      category: listing.category
+      category: listing.category,
+      active: listing.active,
     };
   };
 
@@ -134,21 +135,23 @@
     router.push({ name: "create" });
   };
 
-  const editListing = (id) => {
+  const editListing = (id: number) => {
     router.push({ name: "id", params: { id: id } });
   };
 
-  const deleteListing = async (id) => {
-    if (await confirm.value?.open('Delete', 'Are you sure?', { color: 'red' })) {
-      const { status, error } = await ListingDataService.delete(id)
+  const deleteListing = (id: number) => {
+    currentListing.value.id = id;
+    let deleteListingMethod = async () => {
+      const { status, error } = await ListingDataService.delete(currentListing.value.id)
       await loadListings();
-      if (error?.value == 'error') {
-        await message.value?.open('Error', 'The listing was not deleted!' + (' - ' + (error?.value?.data?.message ?? '')), [], { color: 'red' })
+      if (error?.value && error.value.statusCode !== 200) {
+        messageOpen('Error', 'The listing was not deleted!' + (' - ' + (error?.value?.data?.message ?? '')), [], { color: 'red' })
       }
       if (status?.value == 'success') {
-        await message.value?.open('', 'The listing was deleted successfully!', [], { color: 'green' })
+        messageOpen('', 'The listing was deleted successfully!', [], { color: 'green' })
       }
-    }
+    };
+    confirmOpen('Delete', 'Are you sure?', [], { color: 'red' }, deleteListingMethod);
   };
 
   onMounted(async () => {
